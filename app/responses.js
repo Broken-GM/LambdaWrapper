@@ -50,3 +50,14 @@ export const genericInternalServerError = ({
         body: body
     })
 }
+
+const responseExportsObject = {
+    genericInternalServerError,
+    preflight,
+    success,
+    internalServerError,
+    bodyObject,
+    basicResponseHeaders
+}
+
+export default responseExportsObject
