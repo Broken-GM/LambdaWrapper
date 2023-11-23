@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Broken-GM/LambdaWrapper/issues"
   },
-  "homepage": "https://github.com/Broken-GM/LambdaWrapper#readme"
+  "homepage": "https://github.com/Broken-GM/LambdaWrapper#readme",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
 }
