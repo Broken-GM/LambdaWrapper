@@ -16,6 +16,7 @@ const main = async ({ event, context, functionToRun }) => {
     let response = {}
     let log = {}
     let secrets = {}
+    let dataToOmit = {}
 
     if (event?.httpMethod === "OPTIONS") {
         response = preflight()
@@ -23,7 +24,7 @@ const main = async ({ event, context, functionToRun }) => {
         try {
             response = await run({ 
                 secrets, response, log, 
-                responseExportsObject, logsExportsObject 
+                responseExportsObject, logsExportsObject, dataToOmit
             })
         } catch (error) {
             addErrorrToLog({ log, error })

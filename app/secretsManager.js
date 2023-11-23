@@ -1,6 +1,6 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 
-export const getSecret = async ({ secretName, secrets }) => {
+export const getSecret = async ({ secretName, secrets, dataToOmit }) => {
     const client = new SecretsManagerClient();
 
     const response = await client.send(

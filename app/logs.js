@@ -6,8 +6,8 @@ export const addResponseToLog = ({ log, response }) => {
     addToLog({ log, name: "responseObject", body: response })
 }
 
-export const printLog = ({ log }) => {
-    console.log(log)
+export const printLog = ({ log, dataToOmit }) => {
+    console.log(omitData({ log, dataToOmit }))
 }
 
 export const addErrorrToLog = ({ error, log }) => {
@@ -28,11 +28,22 @@ export const addErrorrToLog = ({ error, log }) => {
     })
 }
 
+export const omitData = ({ log, dataToOmit }) => {
+    let stringifiedLog = JSON.stringify(log)
+
+    dataToOmit.forEach((data) => {
+        stringifiedLog.replaceAll(data, "****")
+    });
+
+    return JSON.parse(stringifiedLog)
+}
+
 const logsExportsObject = {
     addToLog,
     addResponseToLog,
     printLog,
-    addErrorrToLog
+    addErrorrToLog,
+    omitData
 }
 
 export default logsExportsObject
