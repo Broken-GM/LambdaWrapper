@@ -1,15 +1,17 @@
 import responseExportsObject, { genericInternalServerError, preflight } from './app/responses.js'
 import logsExportsObject, { printLog, addToLog, addResponseToLog, addErrorrToLog } from './app/logs.js'
+import fetch from 'node-fetch'
 
-const defaultFunctionToRun = ({ response, log }) => {
-    // "http://checkip.amazonaws.com/"
-    // return {
+const defaultFunctionToRun = async ({ response, log, responseExportsObject, logsExportsObject }) => {
+    const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
+    const text = await fetchResponse.text()
 
-    // }
-    throw new Error("This is a test error!")
+    logsExportsObject.addToLog({ log, name: "IP Respponse", body: { response: text } })
+
+    return responseExportsObject.success({ body: { ip: text }, message: "" })
 }
 
-const main = ({ event, context, functionToRun }) => {
+const main = async ({ event, context, functionToRun }) => {
     const run = functionToRun ? functionToRun : defaultFunctionToRun
     let response = {}
     let log = {}
@@ -18,7 +20,7 @@ const main = ({ event, context, functionToRun }) => {
         response = preflight()
     } else {
         try {
-            response = run({ response, log, responseExportsObject, logsExportsObject })
+            response = await run({ response, log, responseExportsObject, logsExportsObject })
         } catch (error) {
             addErrorrToLog({ log, error })
             response = genericInternalServerError()
