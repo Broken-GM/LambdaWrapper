@@ -15,12 +15,16 @@ const main = async ({ event, context, functionToRun }) => {
     const run = functionToRun ? functionToRun : defaultFunctionToRun
     let response = {}
     let log = {}
+    let secrets = {}
 
     if (event?.httpMethod === "OPTIONS") {
         response = preflight()
     } else {
         try {
-            response = await run({ response, log, responseExportsObject, logsExportsObject })
+            response = await run({ 
+                secrets, response, log, 
+                responseExportsObject, logsExportsObject 
+            })
         } catch (error) {
             addErrorrToLog({ log, error })
             response = genericInternalServerError()
