@@ -32,22 +32,10 @@ export const preflight = () => {
     }
 }
 
-export const genericInternalServerError = ({ 
-    lineNumber, fileName, message, 
-    options, name, cause,
-    columnNumber, stack
-}) => {
-    const body = {
-        errorObject: JSON.stringify({ 
-            lineNumber, fileName, message, 
-            options, name, cause, 
-            columnNumber, stack
-        })
-    }
-
+export const genericInternalServerError = () => {
     return internalServerError({
         message: "An error has occured",
-        body: body
+        body: {}
     })
 }
 
