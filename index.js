@@ -63,7 +63,7 @@ class Lambda {
     }
 
     // Secrets Manager
-    async getSecret({ secretName }) {
+    async getSecret({ secretName, shortName }) {
         const client = new SecretsManagerClient();
 
         const response = await client.send(
@@ -76,7 +76,7 @@ class Lambda {
             const parsedResponse = JSON.parse(response.SecretString)
             const arrayOfSecrets = Object.keys(parsedResponse)
 
-            this.secrets[secretName] = parsedResponse
+            this.secrets[shortName ? shortName : secretName] = parsedResponse
 
             arrayOfSecrets.forEach((secretKey) => {
                 this.dataToOmit.push(parsedResponse[secretKey])
