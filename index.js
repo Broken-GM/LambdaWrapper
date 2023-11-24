@@ -80,7 +80,6 @@ class Lambda {
             this.secrets[secretName] = parsedResponse
 
             arrayOfSecrets.forEach((secretKey) => {
-                console.log(secretKey)
                 this.dataToOmit.push(parsedResponse[secretKey])
             })
         }
@@ -100,6 +99,13 @@ class Lambda {
     internalServerError({ body, message }) {
         return {
             statusCode: 500,
+            headers: this.basicResponseHeaders(),
+            body: this.bodyObject({ body, type: "Error", message })
+        }
+    }
+    badRequestError({ body, message }) {
+        return {
+            statusCode: 400,
             headers: this.basicResponseHeaders(),
             body: this.bodyObject({ body, type: "Error", message })
         }
