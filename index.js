@@ -2,40 +2,39 @@ import responseExportsObject, { genericInternalServerError, preflight } from './
 import logsExportsObject, { printLog, addToLog, addResponseToLog, addErrorrToLog } from './app/logs.js'
 import fetch from 'node-fetch'
 
-const defaultFunctionToRun = async ({ response, log, responseExportsObject, logsExportsObject }) => {
-    const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
-    const text = await fetchResponse.text()
+class Lambda {
+    constructor({ event, context, run }) {
+        this.event = event
+        this.context = context
+        this.response = {}
+        this.log = {}
+        this.secrets = {}
+        this.dataToOmit = []
+        this.run = run ? run : async (lambda) => {
+            const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
+            const text = await fetchResponse.text()
 
-    logsExportsObject.addToLog({ log, name: "IP Respponse", body: { response: text } })
+            logsExportsObject.addToLog({ log: lambda.log, name: "IP Respponse", body: { response: text } })
 
-    return responseExportsObject.success({ body: { ip: text }, message: "" })
-}
-
-const main = async ({ event, context, functionToRun }) => {
-    const run = functionToRun ? functionToRun : defaultFunctionToRun
-    let response = {}
-    let log = {}
-    let secrets = {}
-    let dataToOmit = []
-
-    if (event?.httpMethod === "OPTIONS") {
-        response = preflight()
-    } else {
-        try {
-            response = await run({ 
-                secrets, response, log, 
-                responseExportsObject, logsExportsObject, dataToOmit
-            })
-        } catch (error) {
-            addErrorrToLog({ log, error })
-            response = genericInternalServerError()
+            return responseExportsObject.success({ body: { ip: text }, message: "" })
         }
     }
 
-    addResponseToLog({ log, response })
-    printLog({ log, dataToOmit })
+    async main() {
+        if (this?.event?.httpMethod === "OPTIONS") {
+            this.response = preflight()
+        } else {
+            try {
+                this.response = await this.run(this)
+            } catch (error) {
+                addErrorrToLog({ log: this.log, error })
+                this.response = genericInternalServerError()
+            }
+        }
 
-    return response
+        addResponseToLog({ log: this.log, response: this.response })
+        printLog({ log: this.log, dataToOmit: this.dataToOmit })
+    }
 }
 
-export default main
+export default Lambda
