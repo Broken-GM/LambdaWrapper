@@ -1,5 +1,6 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import fetch from 'node-fetch'
+import util from 'util'
 
 class Lambda {
     constructor({ event, context, run }) {
@@ -60,7 +61,7 @@ class Lambda {
     }
     printLog() {
         this.omitDataFromLog()
-        console.log(this.log)
+        console.log(util.inspect(this.log, {showHidden: false, depth: null, colors: true}))
     }
 
     // Secrets Manager
