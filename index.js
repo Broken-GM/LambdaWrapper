@@ -123,6 +123,15 @@ class Lambda {
             body: {}
         })
     }
+    omitDataFromResponse() {
+        let stringifiedResponse = JSON.stringify(this.response)
+
+        this.dataToOmit.forEach((data) => {
+            stringifiedResponse = stringifiedResponse.replaceAll(data, "****")
+        });
+
+        this.response = JSON.parse(stringifiedResponse)
+    }
 
     async main() {
         if (this.event?.httpMethod === "OPTIONS") {
@@ -138,6 +147,7 @@ class Lambda {
 
         this.addResponseToLog()
         this.printLog()
+        this.omitDataFromResponse()
     }
 }
 
