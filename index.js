@@ -74,13 +74,14 @@ class Lambda {
         );
 
         if (response.SecretString) {
-            const stringifiedResponse = JSON.stringify(response.SecretString)
-            const arrayOfSecrets = Object.keys(stringifiedResponse)
+            const parsedResponse = JSON.parse(response.SecretString)
+            const arrayOfSecrets = Object.keys(parsedResponse)
 
-            this.secrets[secretName] = stringifiedResponse
+            this.secrets[secretName] = parsedResponse
 
             arrayOfSecrets.forEach((secretKey) => {
-                this.dataToOmit.push(stringifiedResponse[secretKey])
+                console.log(secretKey)
+                this.dataToOmit.push(parsedResponse[secretKey])
             })
         }
     }
