@@ -1,5 +1,6 @@
 import responseExportsObject, { genericInternalServerError, preflight } from './app/responses.js'
 import logsExportsObject, { printLog, addToLog, addResponseToLog, addErrorrToLog } from './app/logs.js'
+import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import fetch from 'node-fetch'
 
 class Lambda {
@@ -17,6 +18,27 @@ class Lambda {
             logsExportsObject.addToLog({ log: lambda.log, name: "IP Respponse", body: { response: text } })
 
             return responseExportsObject.success({ body: { ip: text }, message: "" })
+        }
+    }
+
+    async getSecret({ secretName }) {
+        const client = new SecretsManagerClient();
+
+        const response = await client.send(
+            new GetSecretValueCommand({
+                SecretId: secretName,
+            }),
+        );
+
+        if (response.SecretString) {
+            const stringifiedResponse = JSON.stringify(response.SecretString)
+            const arrayOfSecrets = Object.keys(stringifiedResponse)
+
+            this.secrets[secretName] = stringifiedResponse
+
+            arrayOfSecrets.forEach((secretKey) => {
+                this.dataToOmit.push(stringifiedResponse[secretKey])
+            })
         }
     }
 
