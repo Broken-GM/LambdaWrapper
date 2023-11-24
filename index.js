@@ -118,7 +118,7 @@ class Lambda {
         }
     }
     genericInternalServerError() {
-        return internalServerError({
+        return this.internalServerError({
             message: "An error has occured",
             body: {}
         })
