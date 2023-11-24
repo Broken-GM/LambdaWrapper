@@ -141,6 +141,8 @@ class Lambda {
     }
 
     async main() {
+        this.addToLog({ name: "Event Object", body: this.event })
+
         if (this.event?.httpMethod === "OPTIONS") {
             this.response = this.preflight()
         } else {
