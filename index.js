@@ -1,4 +1,3 @@
-import responseExportsObject, { genericInternalServerError, preflight } from './app/responses.js'
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import fetch from 'node-fetch'
 
@@ -16,7 +15,7 @@ class Lambda {
 
             lambda.addToLog({ name: "IP Respponse", body: { response: text } })
 
-            return responseExportsObject.success({ body: { ip: text }, message: "" })
+            return lambda.success({ body: { ip: text }, message: "" })
         }
     }
 
@@ -79,15 +78,54 @@ class Lambda {
         }
     }
 
+    // Response
+    basicResponseHeaders() {
+        return {
+            "Access-Control-Allow-Headers": "Content-Type, X-Api-Key, Authorization",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS, PUT, GET, DELETE"
+        }
+    }
+    bodyObject({ body, type, message }) {
+        return JSON.stringify({ ...body, type, message })
+    }
+    internalServerError({ body, message }) {
+        return {
+            statusCode: 500,
+            headers: this.basicResponseHeaders(),
+            body: this.bodyObject({ body, type: "Error", message })
+        }
+    }
+    success({ body, message }) {
+        return {
+            statusCode: 200,
+            headers: this.basicResponseHeaders(),
+            body: this.bodyObject({ body, type: "Response", message })
+        }
+    }
+    preflight = () => {
+        return {
+            statusCode: 200,
+            headers: this.basicResponseHeaders(),
+            body: this.bodyObject({ body: {}, type: "Preflight", message: "" })
+        }
+    }
+    genericInternalServerError() {
+        return internalServerError({
+            message: "An error has occured",
+            body: {}
+        })
+    }
+
     async main() {
-        if (this?.event?.httpMethod === "OPTIONS") {
-            this.response = preflight()
+        if (this.event?.httpMethod === "OPTIONS") {
+            this.response = this.preflight()
         } else {
             try {
                 this.response = await this.run(this)
             } catch (error) {
                 this.addErrorToLog({ error })
-                this.response = genericInternalServerError()
+                this.response = this.genericInternalServerError()
             }
         }
 
@@ -97,6 +135,3 @@ class Lambda {
 }
 
 export default Lambda
-
-const test = new Lambda({})
-test.main()
