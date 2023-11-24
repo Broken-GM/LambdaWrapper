@@ -16,7 +16,7 @@ const main = async ({ event, context, functionToRun }) => {
     let response = {}
     let log = {}
     let secrets = {}
-    let dataToOmit = {}
+    let dataToOmit = []
 
     if (event?.httpMethod === "OPTIONS") {
         response = preflight()
@@ -33,7 +33,7 @@ const main = async ({ event, context, functionToRun }) => {
     }
 
     addResponseToLog({ log, response })
-    printLog({ log })
+    printLog({ log, dataToOmit })
 
     return response
 }
