@@ -1,5 +1,4 @@
 import responseExportsObject, { genericInternalServerError, preflight } from './app/responses.js'
-import logsExportsObject, { printLog, addToLog, addResponseToLog, addErrorrToLog } from './app/logs.js'
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import fetch from 'node-fetch'
 
@@ -15,12 +14,50 @@ class Lambda {
             const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
             const text = await fetchResponse.text()
 
-            logsExportsObject.addToLog({ log: lambda.log, name: "IP Respponse", body: { response: text } })
+            lambda.addToLog({ name: "IP Respponse", body: { response: text } })
 
             return responseExportsObject.success({ body: { ip: text }, message: "" })
         }
     }
 
+    // Logging
+    addToLog({ name, body }) {
+        this.log[name] = body
+    }
+    addResponseToLog() {
+        this.addToLog({ name: "responseObject", body: this.response })
+    }
+    addErrorToLog({ error }) {
+        const { 
+            lineNumber, fileName, message, 
+            options, name, cause, 
+            columnNumber, stack
+        } = error
+
+        this.addToLog({
+            name: "Error",
+            body: { 
+                lineNumber, fileName, message, 
+                options, name, cause, 
+                columnNumber, stack
+            }
+        })
+    }
+    omitDataFromLog() {
+        let stringifiedLog = JSON.stringify(this.log)
+
+        this.dataToOmit.forEach((data) => {
+            stringifiedLog.replaceAll(data, "****")
+        });
+
+        this.log = JSON.parse(stringifiedLog)
+    }
+    printLog() {
+        this.omitDataFromLog()
+        console.log(this.log)
+    }
+
+    // Secrets Manager
     async getSecret({ secretName }) {
         const client = new SecretsManagerClient();
 
@@ -49,14 +86,17 @@ class Lambda {
             try {
                 this.response = await this.run(this)
             } catch (error) {
-                addErrorrToLog({ log: this.log, error })
+                this.addErrorToLog({ error })
                 this.response = genericInternalServerError()
             }
         }
 
-        addResponseToLog({ log: this.log, response: this.response })
-        printLog({ log: this.log, dataToOmit: this.dataToOmit })
+        this.addResponseToLog()
+        this.printLog()
     }
 }
 
 export default Lambda
+
+const test = new Lambda({})
+test.main()
