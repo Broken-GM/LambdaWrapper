@@ -14,8 +14,6 @@ class Lambda {
             const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
             const text = await fetchResponse.text()
 
-            this.addToDataToOmit({ data: "69" })
-
             lambda.addToLog({ name: "IP Respponse", body: { response: text } })
 
             return lambda.success({ body: { ip: text }, message: "" })
