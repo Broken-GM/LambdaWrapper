@@ -110,6 +110,13 @@ class Lambda {
             body: this.bodyObject({ body, type: "Error", message })
         }
     }
+    timeoutError({ body }) {
+        return {
+            statusCode: 408,
+            headers: this.basicResponseHeaders(),
+            body: this.bodyObject({ body, type: "Error", message: "Request timed out" })
+        }
+    }
     success({ body, message }) {
         return {
             statusCode: 200,
@@ -140,29 +147,47 @@ class Lambda {
         this.response = JSON.parse(stringifiedResponse)
     }
 
-    async main() {
-        this.metaData.time.start = Date.now();
-        this.addToLog({ name: "Event Object", body: this.event })
+    async main(timeout = 3000) {
+        return new Promise(async (resolve) => {
+            this.metaData.time.start = Date.now();
+            this.addToLog({ name: "Event Object", body: this.event })
 
-        if (this.event?.httpMethod === "OPTIONS") {
-            this.response = this.preflight()
-        } else {
-            try {
-                this.response = await this.run(this)
-            } catch (error) {
-                this.addErrorToLog({ error })
-                this.response = this.genericInternalServerError()
+            setTimeout(() => {
+                this.metaData.time.end = Date.now();
+                this.metaData.time.totalExecutionTime = this.metaData.time.end - this.metaData.time.start
+
+                this.addToLog({ name: "Meta Data", body: this.metaData })
+                this.response = timeoutError({ body: {} })
+
+                this.addResponseToLog()
+                this.printLog()
+                this.omitDataFromResponse()
+
+                resolve(this.response)
+            }, timeout - 100)
+
+            if (this.event?.httpMethod === "OPTIONS") {
+                this.response = this.preflight()
+            } else {
+                try {
+                    this.response = await this.run(this)
+                } catch (error) {
+                    this.addErrorToLog({ error })
+                    this.response = this.genericInternalServerError()
+                }
             }
-        }
 
-        this.metaData.time.end = Date.now();
-        this.metaData.time.totalExecutionTime = this.metaData.time.end - this.metaData.time.start
+            this.metaData.time.end = Date.now();
+            this.metaData.time.totalExecutionTime = this.metaData.time.end - this.metaData.time.start
 
-        this.addToLog({ name: "Meta Data", body: this.metaData })
+            this.addToLog({ name: "Meta Data", body: this.metaData })
 
-        this.addResponseToLog()
-        this.printLog()
-        this.omitDataFromResponse()
+            this.addResponseToLog()
+            this.printLog()
+            this.omitDataFromResponse()
+
+            resolve(this.response)
+        })
     }
 }
 
