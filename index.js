@@ -9,6 +9,7 @@ class Lambda {
         this.response = {}
         this.log = {}
         this.secrets = {}
+        this.metaData  = { time: {} }
         this.dataToOmit = []
         this.run = run ? run : async (lambda) => {
             const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
@@ -140,6 +141,7 @@ class Lambda {
     }
 
     async main() {
+        this.metaData.time.start = Date.now();
         this.addToLog({ name: "Event Object", body: this.event })
 
         if (this.event?.httpMethod === "OPTIONS") {
@@ -152,6 +154,11 @@ class Lambda {
                 this.response = this.genericInternalServerError()
             }
         }
+
+        this.metaData.time.end = Date.now();
+        this.metaData.time.totalExecutionTime = this.metaData.time.end - this.metaData.time.start
+
+        this.addToLog({ name: "Meta Data", body: this.metaData })
 
         this.addResponseToLog()
         this.printLog()
