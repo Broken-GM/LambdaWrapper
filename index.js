@@ -137,7 +137,7 @@ class Lambda {
     }
     timeoutError({ body }) {
         return {
-            statusCode: 408,
+            statusCode: 504,
             headers: this.basicResponseHeaders(),
             body: this.bodyObject({ body, type: "Error", message: "Request timed out" })
         }
