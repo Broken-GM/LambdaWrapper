@@ -147,7 +147,7 @@ class Lambda {
         this.response = JSON.parse(stringifiedResponse)
     }
 
-    async main(timeout = 3000) {
+    async main(timeout = 29000, timeoutOffset = 1000) {
         return new Promise(async (resolve) => {
             this.metaData.time.start = Date.now();
             this.addToLog({ name: "Event Object", body: this.event })
@@ -164,7 +164,7 @@ class Lambda {
                 this.omitDataFromResponse()
 
                 resolve(this.response)
-            }, timeout - 100)
+            }, timeout - timeoutOffset)
 
             if (this.event?.httpMethod === "OPTIONS") {
                 this.response = this.preflight()
