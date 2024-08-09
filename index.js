@@ -157,7 +157,7 @@ class Lambda {
                 this.metaData.time.totalExecutionTime = this.metaData.time.end - this.metaData.time.start
 
                 this.addToLog({ name: "Meta Data", body: this.metaData })
-                this.response = timeoutError({ body: {} })
+                this.response = this.timeoutError({ body: {} })
 
                 this.addResponseToLog()
                 this.printLog()
