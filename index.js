@@ -60,7 +60,7 @@ class Lambda {
     }
     printLog() {
         this.omitDataFromLog()
-        console.log(util.inspect(this.log, {showHidden: false, depth: null, colors: true}))
+        console.log(util.inspect(this.log, {showHidden: false, depth: null, colors: false}))
     }
 
     // Secrets Manager
