@@ -19,6 +19,31 @@ class Lambda {
 
             return lambda.success({ body: { ip: text }, message: "" })
         }
+
+        const body = this.isJson(event?.body)
+        if (body?.isJson) {
+            this.body = body?.object
+        }
+    }
+
+    // Helpers
+    isJson(variable) {
+        const cleanedVariable = typeof variable !== "string" ? JSON.stringify(variable) : variable
+        let isJson = true
+        let object = null
+
+        try {
+            object = JSON.parse(cleanedVariable)
+        } catch (error) {
+            isJson = false
+        }
+
+        if (object === null || typeof object !== "object") {
+            isJson = false
+            object = variable
+        }
+
+        return { object, isJson }
     }
 
     // Data Ommition 
