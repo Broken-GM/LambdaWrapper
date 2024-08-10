@@ -31,6 +31,8 @@ class Lambda {
         this.isBodyJson = body?.isJson
         if (body?.isJson) {
             this.body = body?.object
+        } else {
+            this.body = this.event?.body
         }
         this.requiredPayloadKeys = requiredPayloadKeys ? requiredPayloadKeys : []
         this.timeoutTriggered = false
@@ -308,7 +310,7 @@ class Lambda {
     async main(timeout = 29000, timeoutOffset = 1000) {
         return new Promise(async (resolve) => {
             this.addToLog({ name: "Event Object", body: this.event })
-            this.addToLog({ name: "Body Object", body: this.body })
+            this.addToLog({ name: "Body", body: this.body })
             const { isAllRequiredPayloadKeysPresent, message } = this.checkForRequiredPayloadKeys()
             if (!isAllRequiredPayloadKeysPresent) {
                 this.response = this.badRequestError({ body: {}, message })
