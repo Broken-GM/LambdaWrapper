@@ -9,7 +9,7 @@ class Lambda {
     constructor({ event, context, run, region, customPostExecution, omitDynamoResponses }) {
         this.metaData  = { timers: {} }
         this.startTimer({ name: 'totalExecution' })
-        
+
         this.event = event
         this.context = context
         this.response = {}
@@ -68,6 +68,9 @@ class Lambda {
             this.metaData.timers[name].end = Date.now()
             this.metaData.timers[name].totalExecutionTime = this.metaData.timers[name].end - this.metaData.timers[name].start
         }
+    }
+    processMetaData() {
+        this.metaData.lambdaWrapperExecutionTime = this.metaData?.timers?.totalExecution?.totalExecutionTime - this.metaData?.timers?.runExecution?.totalExecutionTime
     }
 
     // Logging
@@ -228,11 +231,13 @@ class Lambda {
 
     // Operations
     postExecution() {
-        this.addResponseToLog()
-        this.addMetaDataToLog()
-        this.customPostExecution()
-        this.printLog()
         this.omitDataFromResponse()
+        this.addResponseToLog()
+        this.customPostExecution()
+        this.endTimer({ name: 'totalExecution' })
+        this.processMetaData()
+        this.addMetaDataToLog()
+        this.printLog()
     }
 
     async main(timeout = 29000, timeoutOffset = 1000) {
@@ -259,9 +264,8 @@ class Lambda {
                     this.response = this.genericInternalServerError()
                 }
             }
+
             this.postExecution()
-            
-            this.endTimer({ name: 'totalExecution' })
             resolve(this.response)
         })
     }
