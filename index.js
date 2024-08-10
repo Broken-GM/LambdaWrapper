@@ -6,7 +6,7 @@ import util from 'util'
 import { v4 as uuidv4 } from 'uuid';
 
 class Lambda {
-    constructor({ event, context, run, region, customPostExecution, omitDynamoResponses, requiredPayloadKeys }) {
+    constructor({ event, context, run, region, customPostExecution, omitDynamoResponses, requiredPayloadKeys, timeout, timeoutOffset }) {
         this.metaData  = { timers: {} }
         this.startTimer({ name: 'totalExecution' })
 
@@ -36,6 +36,8 @@ class Lambda {
         }
         this.requiredPayloadKeys = requiredPayloadKeys ? requiredPayloadKeys : []
         this.timeoutTriggered = false
+        this.timeout = timeout ? timeout : 29000
+        this.timeoutOffset = timeoutOffset ? timeoutOffset : 1000
     }
 
     // Helpers
@@ -307,7 +309,7 @@ class Lambda {
         }
     }
 
-    async main(timeout = 29000, timeoutOffset = 1000) {
+    async main() {
         return new Promise(async (resolve) => {
             this.addToLog({ name: "Event Object", body: this.event })
             this.addToLog({ name: "Body", body: this.body })
@@ -319,14 +321,14 @@ class Lambda {
                 return
             }
 
-            this.timeout = setTimeout(() => {
+            this.timeoutId = setTimeout(() => {
                 this.timeoutTriggered = true
                 this.response = this.timeoutError({ body: {} })
                 this.endTimer({ name: 'runExecution' })
                 this.postExecution()
 
                 resolve(this.response)
-            }, timeout - timeoutOffset)
+            }, this.timeout - this.timeoutOffset)
 
             if (this.event?.httpMethod === "OPTIONS") {
                 this.response = this.preflight()
@@ -342,7 +344,7 @@ class Lambda {
             }
 
             if (!this.timeoutTriggered) {
-                clearTimeout(this.timeout)
+                clearTimeout(this.timeoutId)
                 this.postExecution()
                 resolve(this.response)
             }
