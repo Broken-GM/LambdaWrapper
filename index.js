@@ -308,6 +308,7 @@ class Lambda {
     async main(timeout = 29000, timeoutOffset = 1000) {
         return new Promise(async (resolve) => {
             this.addToLog({ name: "Event Object", body: this.event })
+            this.addToLog({ name: "Body Object", body: this.body })
             const { isAllRequiredPayloadKeysPresent, message } = this.checkForRequiredPayloadKeys()
             if (!isAllRequiredPayloadKeysPresent) {
                 this.response = this.badRequestError({ body: {}, message })
