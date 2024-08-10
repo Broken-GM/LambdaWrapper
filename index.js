@@ -12,7 +12,7 @@ class Lambda {
         this.response = {}
         this.log = {}
         this.secrets = {}
-        this.metaData  = { time: {} }
+        this.metaData  = { timers: {} }
         this.dataToOmit = []
         this.run = run ? run : async (lambda) => {
             const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
@@ -52,6 +52,18 @@ class Lambda {
     // Data Ommition 
     addToDataToOmit({ data }) {
         this.dataToOmit.push(data)
+    }
+
+    // MetaData
+    startTimer({ name }) {
+        this.metaData.timers[name] = {}
+        this.metaData.timers[name].start = Date.now()
+    }
+    endTimer({ name }) {
+        if (this.metaData.timers[name]) {
+            this.metaData.timers[name].end = Date.now()
+            this.metaData.timers[name].totalExecutionTime = this.metaData.timers[name].end - this.metaData.timers[name].start
+        }
     }
 
     // Logging
