@@ -302,7 +302,6 @@ class Lambda {
             this.addToLog({ name: "Event Object", body: this.event })
             const { isAllRequiredPayloadKeysPresent, message } = this.checkForRequiredPayloadKeys()
             if (!isAllRequiredPayloadKeysPresent) {
-                console.log(isAllRequiredPayloadKeysPresent)
                 this.response = this.badRequestError({ body: {}, message })
                 this.postExecution()
                 resolve(this.response)
