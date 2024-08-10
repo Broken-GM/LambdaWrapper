@@ -246,47 +246,55 @@ class Lambda {
         if (this.isBodyJson) {
             let message = ''
             let isAllRequiredPayloadKeysPresent = true
+            let payloadKeyErrorTriggered = false
             this.requiredPayloadKeys?.forEach((requiredPayloadKey) => {
-                if (requiredPayloadKey?.operator === 'or') {
-                    let amountMissing = 0
-                    requiredPayloadKey?.keys?.forEach((key, i) => {
-                        if (i === requiredPayloadKey?.keys?.length - 1) {
-                            message += `or ${key} `
-                        } else if (i === requiredPayloadKey?.keys?.length - 2) {
-                            message += `${key} `
-                        } else {
-                            message += `${key}, `
+                if (!payloadKeyErrorTriggered) {
+                    if (requiredPayloadKey?.operator === 'or') {
+                        let amountMissing = 0
+                        let tempMessage = ''
+                        requiredPayloadKey?.keys?.forEach((key, i) => {
+                            if (i === requiredPayloadKey?.keys?.length - 1) {
+                                tempMessage += `or ${key} `
+                            } else if (i === requiredPayloadKey?.keys?.length - 2) {
+                                tempMessage += `${key} `
+                            } else {
+                                tempMessage += `${key}, `
+                            }
+                            if (this.body?.[key] === undefined || this.body?.[key] === null) {
+                                amountMissing += 1
+                            }
+                        })
+                        if (amountMissing === requiredPayloadKey?.keys?.length) {
+                            isAllRequiredPayloadKeysPresent = false
+                            message += `${tempMessage}is required`
+                            payloadKeyErrorTriggered = true
                         }
-                        if (this.body?.[key] === undefined || this.body?.[key] === null) {
-                            amountMissing += 1
+                    } else if (requiredPayloadKey?.operator === 'and') {
+                        let amountMissing = 0
+                        let tempMessage = ''
+                        requiredPayloadKey?.keys?.forEach((key, i) => {
+                            if (i === requiredPayloadKey?.keys?.length - 1) {
+                                tempMessage += `and ${key} `
+                            } else if (i === requiredPayloadKey?.keys?.length - 2) {
+                                tempMessage += `${key} `
+                            } else {
+                                tempMessage += `${key}, `
+                            }
+                            if (this.body?.[key] === undefined || this.body?.[key] === null) {
+                                amountMissing += 1
+                            }
+                        })
+                        if (amountMissing > 0) {
+                            isAllRequiredPayloadKeysPresent = false
+                            message += `${tempMessage}are required`
+                            payloadKeyErrorTriggered = true
                         }
-                    })
-                    if (amountMissing === requiredPayloadKey?.keys?.length) {
-                        isAllRequiredPayloadKeysPresent = false
-                        message += 'are required'
-                    }
-                } else if (requiredPayloadKey?.operator === 'and') {
-                    let amountMissing = 0
-                    requiredPayloadKey?.keys?.forEach((key, i) => {
-                        if (i === requiredPayloadKey?.keys?.length - 1) {
-                            message += `and ${key} `
-                        } else if (i === requiredPayloadKey?.keys?.length - 2) {
-                            message += `${key} `
-                        } else {
-                            message += `${key}, `
+                    } else {
+                        if (this.body?.[requiredPayloadKey?.key] === undefined || this.body?.[requiredPayloadKey?.key] === null) {
+                            isAllRequiredPayloadKeysPresent = false
+                            message += `${requiredPayloadKey?.key} is required`
+                            payloadKeyErrorTriggered = true
                         }
-                        if (this.body?.[key] === undefined || this.body?.[key] === null) {
-                            amountMissing += 1
-                        }
-                    })
-                    if (amountMissing > 0) {
-                        isAllRequiredPayloadKeysPresent = false
-                        message += 'are required'
-                    }
-                } else {
-                    if (this.body?.[requiredPayloadKey?.key] === undefined || this.body?.[requiredPayloadKey?.key] === null) {
-                        isAllRequiredPayloadKeysPresent = false
-                        message += `${requiredPayloadKey?.key} is required`
                     }
                 }
             })
