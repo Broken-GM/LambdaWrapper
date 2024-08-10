@@ -7,12 +7,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 class Lambda {
     constructor({ event, context, run, region, customPostExecution, omitDynamoResponses }) {
+        this.metaData  = { timers: {} }
+        this.startTimer({ name: 'totalExecution' })
+        
         this.event = event
         this.context = context
         this.response = {}
         this.log = {}
         this.secrets = {}
-        this.metaData  = { timers: {} }
         this.dataToOmit = []
         this.customPostExecution = customPostExecution ? customPostExecution : () => {}
         this.omitDynamoResponses = omitDynamoResponses ? omitDynamoResponses : false
@@ -235,12 +237,11 @@ class Lambda {
 
     async main(timeout = 29000, timeoutOffset = 1000) {
         return new Promise(async (resolve) => {
-            this.startTimer({ name: 'execution' })
             this.addToLog({ name: "Event Object", body: this.event })
 
             setTimeout(() => {
-                this.endTimer({ name: 'execution' })
                 this.response = this.timeoutError({ body: {} })
+                this.endTimer({ name: 'runExecution' })
                 this.postExecution()
 
                 resolve(this.response)
@@ -250,16 +251,17 @@ class Lambda {
                 this.response = this.preflight()
             } else {
                 try {
+                    this.startTimer({ name: 'runExecution' })
                     this.response = await this.run(this)
+                    this.endTimer({ name: 'runExecution' })
                 } catch (error) {
                     this.addErrorToLog({ error })
                     this.response = this.genericInternalServerError()
                 }
             }
-
-            this.endTimer({ name: 'execution' })
             this.postExecution()
-
+            
+            this.endTimer({ name: 'totalExecution' })
             resolve(this.response)
         })
     }
