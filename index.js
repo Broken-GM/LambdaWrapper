@@ -6,7 +6,7 @@ import util from 'util'
 import { v4 as uuidv4 } from 'uuid';
 
 class Lambda {
-    constructor({ event, context, run, region, customPostExecution }) {
+    constructor({ event, context, run, region, customPostExecution, omitDynamoResponses }) {
         this.event = event
         this.context = context
         this.response = {}
@@ -15,6 +15,7 @@ class Lambda {
         this.metaData  = { timers: {} }
         this.dataToOmit = []
         this.customPostExecution = customPostExecution ? customPostExecution : () => {}
+        this.omitDynamoResponses = omitDynamoResponses ? omitDynamoResponses : false
         this.run = run ? run : async (lambda) => {
             const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
             const text = await fetchResponse.text()
@@ -140,7 +141,7 @@ class Lambda {
         })
         const getEntryResponse = await this.client.send(getUserCommand)
         const attributes = JSON.parse(getEntryResponse?.Item?.attributes ? getEntryResponse?.Item?.attributes : "{}")
-        addToLog({ name: `get-${table}-${pk}-${sk}-${uuidv4()}`, getEntryResponse })
+        addToLog({ name: `get-${table}-${pk}-${sk}-${uuidv4()}`, body: this.omitDynamoResponses ? "get sent" : getEntryResponse })
 
         return { response: getEntryResponse, attributes }
     }
@@ -156,7 +157,7 @@ class Lambda {
 		const putEntryCommand = new PutCommand(putEntryInput)
 
 		const putEntryResponse = await this.client.send(putEntryCommand)
-        addToLog({ name: `put-${table}-${pk}-${sk}-${uuidv4()}`, putEntryResponse })
+        addToLog({ name: `put-${table}-${pk}-${sk}-${uuidv4()}`, body: this.omitDynamoResponses ? "put sent" : putEntryResponse })
 
         return { response: putEntryResponse }
     }
