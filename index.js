@@ -221,16 +221,15 @@ class Lambda {
 
     async main(timeout = 29000, timeoutOffset = 1000) {
         return new Promise(async (resolve) => {
-            this.metaData.time.start = Date.now();
+            this.startTimer({ name: 'execution' })
             this.addToLog({ name: "Event Object", body: this.event })
 
             setTimeout(() => {
-                this.metaData.time.end = Date.now();
-                this.metaData.time.totalExecutionTime = this.metaData.time.end - this.metaData.time.start
+                this.endTimer({ name: 'execution' })
 
                 this.addToLog({ name: "Meta Data", body: this.metaData })
                 this.response = this.timeoutError({ body: {} })
-
+                
                 this.addResponseToLog()
                 this.printLog()
                 this.omitDataFromResponse()
@@ -249,11 +248,8 @@ class Lambda {
                 }
             }
 
-            this.metaData.time.end = Date.now();
-            this.metaData.time.totalExecutionTime = this.metaData.time.end - this.metaData.time.start
-
+            this.endTimer({ name: 'execution' })
             this.addToLog({ name: "Meta Data", body: this.metaData })
-
             this.addResponseToLog()
             this.printLog()
             this.omitDataFromResponse()
