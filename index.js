@@ -1,9 +1,12 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
 import fetch from 'node-fetch'
 import util from 'util'
+import { v4 as uuidv4 } from 'uuid';
 
 class Lambda {
-    constructor({ event, context, run }) {
+    constructor({ event, context, run, region }) {
         this.event = event
         this.context = context
         this.response = {}
@@ -19,7 +22,7 @@ class Lambda {
 
             return lambda.success({ body: { ip: text }, message: "" })
         }
-
+        this.client = new DynamoDBClient({ region: region ? region : 'us-west-2' })
         const body = this.isJson(event?.body)
         if (body?.isJson) {
             this.body = body?.object
@@ -108,6 +111,38 @@ class Lambda {
                 this.dataToOmit.push(parsedResponse[secretKey])
             })
         }
+    }
+
+    // Dynamo
+    async getDynamoEntry({ table, pk, sk }) {
+        const getUserCommand = new GetCommand({
+            TableName: table,
+            Key: {
+                PK: pk,
+                SK: sk
+            },
+        })
+        const getEntryResponse = await this.client.send(getUserCommand)
+        const attributes = JSON.parse(getEntryResponse?.Item?.attributes ? getEntryResponse?.Item?.attributes : "{}")
+        addToLog({ name: `get-${table}-${pk}-${sk}-${uuidv4()}`, getEntryResponse })
+
+        return { response: getEntryResponse, attributes }
+    }
+    async putDynamoEntry({ table, pk, sk, items }) {
+        const putEntryInput = {
+			TableName: table,
+			Item: {
+				PK: pk,
+				SK: sk,
+				...items
+			},
+		}
+		const putEntryCommand = new PutCommand(putEntryInput)
+
+		const putEntryResponse = await this.client.send(putEntryCommand)
+        addToLog({ name: `put-${table}-${pk}-${sk}-${uuidv4()}`, putEntryResponse })
+
+        return { response: putEntryResponse }
     }
 
     // Response
