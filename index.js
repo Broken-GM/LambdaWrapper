@@ -6,7 +6,7 @@ import util from 'util'
 import { v4 as uuidv4 } from 'uuid';
 
 class Lambda {
-    constructor({ event, context, run, region, customPostExecution, omitDynamoResponses }) {
+    constructor({ event, context, run, region, customPostExecution, omitDynamoResponses, requiredPayloadKeys }) {
         this.metaData  = { timers: {} }
         this.startTimer({ name: 'totalExecution' })
 
@@ -28,9 +28,12 @@ class Lambda {
         }
         this.client = new DynamoDBClient({ region: region ? region : 'us-west-2' })
         const body = this.isJson(event?.body)
+        this.isBodyJson = body?.isJson
         if (body?.isJson) {
             this.body = body?.object
         }
+        this.requiredPayloadKeys = requiredPayloadKeys ? requiredPayloadKeys : []
+        this.timeoutTriggered = false
     }
 
     // Helpers
@@ -232,19 +235,82 @@ class Lambda {
     // Operations
     postExecution() {
         this.omitDataFromResponse()
-        this.addResponseToLog()
         this.customPostExecution()
         this.endTimer({ name: 'totalExecution' })
         this.processMetaData()
         this.addMetaDataToLog()
+        this.addResponseToLog()
         this.printLog()
+    }
+    checkForRequiredPayloadKeys() {
+        if (this.isBodyJson) {
+            let message = ''
+            let isAllRequiredPayloadKeysPresent = true
+            this.requiredPayloadKeys?.forEach((requiredPayloadKey) => {
+                if (requiredPayloadKey?.operator === 'or') {
+                    let amountMissing = 0
+                    requiredPayloadKey?.keys?.forEach((key, i) => {
+                        if (i === requiredPayloadKey?.keys?.length - 1) {
+                            message += `or ${key} `
+                        } else if (i === requiredPayloadKey?.keys?.length - 2) {
+                            message += `${key} `
+                        } else {
+                            message += `${key}, `
+                        }
+                        if (this.body?.[key] === undefined || this.body?.[key] === null) {
+                            amountMissing += 1
+                        }
+                    })
+                    if (amountMissing === requiredPayloadKey?.keys?.length) {
+                        isAllRequiredPayloadKeysPresent = false
+                        message += 'are required'
+                    }
+                } else if (requiredPayloadKey?.operator === 'and') {
+                    let amountMissing = 0
+                    requiredPayloadKey?.keys?.forEach((key, i) => {
+                        if (i === requiredPayloadKey?.keys?.length - 1) {
+                            message += `and ${key} `
+                        } else if (i === requiredPayloadKey?.keys?.length - 2) {
+                            message += `${key} `
+                        } else {
+                            message += `${key}, `
+                        }
+                        if (this.body?.[key] === undefined || this.body?.[key] === null) {
+                            amountMissing += 1
+                        }
+                    })
+                    if (amountMissing > 0) {
+                        isAllRequiredPayloadKeysPresent = false
+                        message += 'are required'
+                    }
+                } else {
+                    if (this.body?.[requiredPayloadKey?.key] === undefined || this.body?.[requiredPayloadKey?.key] === null) {
+                        isAllRequiredPayloadKeysPresent = false
+                        message += `${requiredPayloadKey?.key} is required`
+                    }
+                }
+            })
+            
+            return { isAllRequiredPayloadKeysPresent, message }
+        } else {
+            return { isAllRequiredPayloadKeysPresent: true, message: '' }
+        }
     }
 
     async main(timeout = 29000, timeoutOffset = 1000) {
         return new Promise(async (resolve) => {
             this.addToLog({ name: "Event Object", body: this.event })
+            const { isAllRequiredPayloadKeysPresent, message } = this.checkForRequiredPayloadKeys()
+            if (!isAllRequiredPayloadKeysPresent) {
+                console.log(isAllRequiredPayloadKeysPresent)
+                this.response = this.badRequestError({ body: {}, message })
+                this.postExecution()
+                resolve(this.response)
+                return
+            }
 
-            setTimeout(() => {
+            this.timeout = setTimeout(() => {
+                this.timeoutTriggered = true
                 this.response = this.timeoutError({ body: {} })
                 this.endTimer({ name: 'runExecution' })
                 this.postExecution()
@@ -265,8 +331,11 @@ class Lambda {
                 }
             }
 
-            this.postExecution()
-            resolve(this.response)
+            if (!this.timeoutTriggered) {
+                clearTimeout(this.timeout)
+                this.postExecution()
+                resolve(this.response)
+            }
         })
     }
 }
