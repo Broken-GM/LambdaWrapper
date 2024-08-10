@@ -149,7 +149,7 @@ class Lambda {
         })
         const getEntryResponse = await this.client.send(getUserCommand)
         const attributes = JSON.parse(getEntryResponse?.Item?.attributes ? getEntryResponse?.Item?.attributes : "{}")
-        this.addToLog({ name: `get-${table}-${pk}-${sk}-${uuidv4()}`, body: this.omitDynamoResponses ? "get sent" : getEntryResponse })
+        this.addToLog({ name: `get>${table}>${pk}>${sk}>${uuidv4()}`, body: this.omitDynamoResponses ? "get sent" : getEntryResponse })
 
         return { response: getEntryResponse, attributes }
     }
@@ -165,7 +165,7 @@ class Lambda {
 		const putEntryCommand = new PutCommand(putEntryInput)
 
 		const putEntryResponse = await this.client.send(putEntryCommand)
-        this.addToLog({ name: `put-${table}-${pk}-${sk}-${uuidv4()}`, body: this.omitDynamoResponses ? "put sent" : putEntryResponse })
+        this.addToLog({ name: `put>${table}>${pk}>${sk}>${uuidv4()}`, body: this.omitDynamoResponses ? "put sent" : putEntryResponse })
 
         return { response: putEntryResponse }
     }
