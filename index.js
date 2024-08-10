@@ -6,7 +6,7 @@ import util from 'util'
 import { v4 as uuidv4 } from 'uuid';
 
 class Lambda {
-    constructor({ event, context, run, region }) {
+    constructor({ event, context, run, region, customPostExecution }) {
         this.event = event
         this.context = context
         this.response = {}
@@ -14,6 +14,7 @@ class Lambda {
         this.secrets = {}
         this.metaData  = { timers: {} }
         this.dataToOmit = []
+        this.customPostExecution = customPostExecution ? customPostExecution : () => {}
         this.run = run ? run : async (lambda) => {
             const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
             const text = await fetchResponse.text()
@@ -72,6 +73,9 @@ class Lambda {
     }
     addResponseToLog() {
         this.addToLog({ name: "responseObject", body: this.response })
+    }
+    addMetaDataToLog() {
+        this.addToLog({ name: "Meta Data", body: this.metaData })
     }
     addErrorToLog({ error }) {
         const { 
@@ -219,6 +223,15 @@ class Lambda {
         this.response = JSON.parse(stringifiedResponse)
     }
 
+    // Operations
+    postExecution() {
+        this.addResponseToLog()
+        this.addMetaDataToLog()
+        this.customPostExecution()
+        this.printLog()
+        this.omitDataFromResponse()
+    }
+
     async main(timeout = 29000, timeoutOffset = 1000) {
         return new Promise(async (resolve) => {
             this.startTimer({ name: 'execution' })
@@ -226,13 +239,8 @@ class Lambda {
 
             setTimeout(() => {
                 this.endTimer({ name: 'execution' })
-
-                this.addToLog({ name: "Meta Data", body: this.metaData })
                 this.response = this.timeoutError({ body: {} })
-                
-                this.addResponseToLog()
-                this.printLog()
-                this.omitDataFromResponse()
+                this.postExecution()
 
                 resolve(this.response)
             }, timeout - timeoutOffset)
@@ -249,10 +257,7 @@ class Lambda {
             }
 
             this.endTimer({ name: 'execution' })
-            this.addToLog({ name: "Meta Data", body: this.metaData })
-            this.addResponseToLog()
-            this.printLog()
-            this.omitDataFromResponse()
+            this.postExecution()
 
             resolve(this.response)
         })
