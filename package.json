@@ -1,7 +1,7 @@
 {
   "type": "module",
-  "name": "@brokengm/lambdawrapper",
-  "version": "0.0.5",
+  "name": "@Broken-GM/lambdawrapper",
+  "version": "0.0.6",
   "description": "A Wrapper for Nodejs Lambdas to standardize invocation, outputs, and logging",
   "main": "index.ts",
   "scripts": {
