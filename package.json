@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "@brokengm/lambdawrapper",
+  "name": "lambdawrapper",
   "version": "0.0.1",
   "description": "A Wrapper for Nodejs Lambdas to standardize invocation, outputs, and logging",
   "main": "index.ts",
