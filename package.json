@@ -1,9 +1,9 @@
 {
   "type": "module",
-  "name": "@carson.key/lambdawrapper",
-  "version": "0.0.12",
-  "description": "A Wrapper for Nodejs Lambdas to standardize invokation, outputs, and logging",
-  "main": "index.js",
+  "name": "@brokengm/lambdawrapper",
+  "version": "0.0.1",
+  "description": "A Wrapper for Nodejs Lambdas to standardize invocation, outputs, and logging",
+  "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/Broken-GM/LambdaWrapper.git"
   },
-  "author": "Carson Key",
+  "author": "BrokenGM",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Broken-GM/LambdaWrapper/issues"
