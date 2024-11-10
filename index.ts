@@ -6,8 +6,36 @@ import util from 'util'
 import { v4 as uuidv4 } from 'uuid';
 
 class Lambda {
-    constructor({ event, context, run, region, customPostExecution, omitDynamoResponses, requiredPayloadKeys, timeout, timeoutOffset }) {
-        this.metaData  = { timers: {} }
+    client: DynamoDBClient;
+    metaData: { 
+        timers: any; 
+        lambdaWrapperExecutionTime: number; 
+    }; 
+    event: any;
+    context: any
+    response: any;
+    log: any;
+    secrets: any;
+    dataToOmit: any;
+    customPostExecution: any;
+    omitDynamoResponses: any;
+    run: any;
+    isBodyJson: any;
+    body: any;
+    requiredPayloadKeys: any;
+    timeoutTriggered: any;
+    timeout: any;
+    timeoutOffset: any;
+    timeoutId: any;
+
+    constructor({ 
+        event, context, run, region, customPostExecution, 
+        omitDynamoResponses, requiredPayloadKeys, timeout, timeoutOffset 
+    }: {
+        event: any; context: any; run: any; region: string; customPostExecution: any;
+        omitDynamoResponses: any, requiredPayloadKeys: any; timeout: any; timeoutOffset: any;
+    }) {
+        this.metaData  = { timers: {}, lambdaWrapperExecutionTime: 0 }
         this.startTimer({ name: 'totalExecution' })
 
         this.event = event
@@ -18,7 +46,7 @@ class Lambda {
         this.dataToOmit = []
         this.customPostExecution = customPostExecution ? customPostExecution : () => {}
         this.omitDynamoResponses = omitDynamoResponses ? omitDynamoResponses : false
-        this.run = run ? run : async (lambda) => {
+        this.run = run ? run : async (lambda: Lambda) => {
             const fetchResponse = await fetch("http://checkip.amazonaws.com/", { method: 'GET' })
             const text = await fetchResponse.text()
 
@@ -41,7 +69,7 @@ class Lambda {
     }
 
     // Helpers
-    isJson(variable) {
+    isJson(variable: any) {
         const cleanedVariable = typeof variable !== "string" ? JSON.stringify(variable) : variable
         let isJson = true
         let object = null
@@ -61,16 +89,16 @@ class Lambda {
     }
 
     // Data Ommition 
-    addToDataToOmit({ data }) {
+    addToDataToOmit({ data }: any) {
         this.dataToOmit.push(data)
     }
 
     // MetaData
-    startTimer({ name }) {
+    startTimer({ name }: { name: string }) {
         this.metaData.timers[name] = {}
         this.metaData.timers[name].start = Date.now()
     }
-    endTimer({ name }) {
+    endTimer({ name }: { name: string }) {
         if (this.metaData.timers[name]) {
             this.metaData.timers[name].end = Date.now()
             this.metaData.timers[name].totalExecutionTime = this.metaData.timers[name].end - this.metaData.timers[name].start
@@ -81,7 +109,7 @@ class Lambda {
     }
 
     // Logging
-    addToLog({ name, body }) {
+    addToLog({ name, body }: { name: string, body: any}) {
         this.log[name] = body
     }
     addResponseToLog() {
@@ -90,7 +118,7 @@ class Lambda {
     addMetaDataToLog() {
         this.addToLog({ name: "Meta Data", body: this.metaData })
     }
-    addErrorToLog({ error }) {
+    addErrorToLog({ error }: any) {
         const { 
             lineNumber, fileName, message, 
             options, name, cause, 
@@ -109,7 +137,7 @@ class Lambda {
     omitDataFromLog() {
         let stringifiedLog = JSON.stringify(this.log)
 
-        this.dataToOmit.forEach((data) => {
+        this.dataToOmit.forEach((data: any) => {
             stringifiedLog = stringifiedLog.replaceAll(data, "****")
         });
 
@@ -121,7 +149,7 @@ class Lambda {
     }
 
     // Secrets Manager
-    async getSecret({ secretName, shortName }) {
+    async getSecret({ secretName, shortName }: { secretName: string, shortName?: string }) {
         const client = new SecretsManagerClient();
 
         const response = await client.send(
@@ -143,7 +171,7 @@ class Lambda {
     }
 
     // Dynamo
-    async getDynamoEntry({ table, pk, sk }) {
+    async getDynamoEntry({ table, pk, sk }: { table: string, pk: string, sk: string }) {
         const getUserCommand = new GetCommand({
             TableName: table,
             Key: {
@@ -157,7 +185,7 @@ class Lambda {
 
         return { response: getEntryResponse, attributes }
     }
-    async putDynamoEntry({ table, pk, sk, items }) {
+    async putDynamoEntry({ table, pk, sk, items }: { table: string, pk: string, sk: string, items: any }) {
         const putEntryInput = {
 			TableName: table,
 			Item: {
@@ -182,31 +210,31 @@ class Lambda {
             "Access-Control-Allow-Methods": "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD"
         }
     }
-    bodyObject({ body, type, message }) {
+    bodyObject({ body, type, message }: { body: any, type: string, message: string }) {
         return JSON.stringify({ ...body, type, message })
     }
-    internalServerError({ body, message }) {
+    internalServerError({ body, message }: { body: any, message: string }) {
         return {
             statusCode: 500,
             headers: this.basicResponseHeaders(),
             body: this.bodyObject({ body, type: "Error", message })
         }
     }
-    badRequestError({ body, message }) {
+    badRequestError({ body, message }: { body: any, message: string }) {
         return {
             statusCode: 400,
             headers: this.basicResponseHeaders(),
             body: this.bodyObject({ body, type: "Error", message })
         }
     }
-    timeoutError({ body }) {
+    timeoutError({ body }: { body: any }) {
         return {
             statusCode: 504,
             headers: this.basicResponseHeaders(),
             body: this.bodyObject({ body, type: "Error", message: "Request timed out" })
         }
     }
-    success({ body, message }) {
+    success({ body, message }: { body: any, message: string }) {
         return {
             statusCode: 200,
             headers: this.basicResponseHeaders(),
@@ -229,7 +257,7 @@ class Lambda {
     omitDataFromResponse() {
         let stringifiedResponse = JSON.stringify(this.response)
 
-        this.dataToOmit.forEach((data) => {
+        this.dataToOmit.forEach((data: any) => {
             stringifiedResponse = stringifiedResponse.replaceAll(data, "****")
         });
 
@@ -251,12 +279,12 @@ class Lambda {
             let message = ''
             let isAllRequiredPayloadKeysPresent = true
             let payloadKeyErrorTriggered = false
-            this.requiredPayloadKeys?.forEach((requiredPayloadKey) => {
+            this.requiredPayloadKeys?.forEach((requiredPayloadKey: any) => {
                 if (!payloadKeyErrorTriggered) {
                     if (requiredPayloadKey?.operator === 'or') {
                         let amountMissing = 0
                         let tempMessage = ''
-                        requiredPayloadKey?.keys?.forEach((key, i) => {
+                        requiredPayloadKey?.keys?.forEach((key: any, i: number) => {
                             if (i === requiredPayloadKey?.keys?.length - 1) {
                                 tempMessage += `or ${key} `
                             } else if (i === requiredPayloadKey?.keys?.length - 2) {
@@ -276,7 +304,7 @@ class Lambda {
                     } else if (requiredPayloadKey?.operator === 'and') {
                         let amountMissing = 0
                         let tempMessage = ''
-                        requiredPayloadKey?.keys?.forEach((key, i) => {
+                        requiredPayloadKey?.keys?.forEach((key: any, i: number) => {
                             if (i === requiredPayloadKey?.keys?.length - 1) {
                                 tempMessage += `and ${key} `
                             } else if (i === requiredPayloadKey?.keys?.length - 2) {

@@ -5,7 +5,8 @@
   "description": "A Wrapper for Nodejs Lambdas to standardize invocation, outputs, and logging",
   "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
@@ -21,10 +22,15 @@
   },
   "homepage": "https://github.com/Broken-GM/LambdaWrapper#readme",
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.454.0",
     "@aws-sdk/client-dynamodb": "^3.421.0",
+    "@aws-sdk/client-secrets-manager": "^3.454.0",
     "@aws-sdk/lib-dynamodb": "^3.421.0",
     "node-fetch": "^3.3.2",
+    "typescript": "^5.6.3",
     "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/uuid": "^10.0.0"
   }
 }
