@@ -32,8 +32,8 @@ class Lambda {
         event, context, run, region, customPostExecution, 
         omitDynamoResponses, requiredPayloadKeys, timeout, timeoutOffset 
     }: {
-        event: any; context: any; run: any; region: string; customPostExecution: any;
-        omitDynamoResponses: any, requiredPayloadKeys: any; timeout: any; timeoutOffset: any;
+        event: any; context: any; run?: any; region?: string; customPostExecution?: any;
+        omitDynamoResponses?: any, requiredPayloadKeys?: any; timeout?: any; timeoutOffset?: any;
     }) {
         this.metaData  = { timers: {}, lambdaWrapperExecutionTime: 0 }
         this.startTimer({ name: 'totalExecution' })
