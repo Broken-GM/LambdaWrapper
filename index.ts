@@ -5,6 +5,7 @@ import { SignatureV4 } from "@aws-sdk/signature-v4";
 import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
+import { HttpRequest } from "@aws-sdk/protocol-http";
 
 class Lambda {
     metaData: { 
@@ -121,7 +122,6 @@ class Lambda {
         this.addToLog({ name: "Appsync Url", body: returnedAppsyncUrl })
         return returnedAppsyncUrl ?? ""
     }
-
     createBasicSigner({ region }: { region?: string; }) {
         return new SignatureV4({
             credentials: defaultProvider(),
@@ -129,6 +129,37 @@ class Lambda {
             service: 'appsync',
             sha256: Sha256
         });
+    }
+    async sendAppsyncRequest({ query, variables }: { query: string, variables?: any, operationName?: string }) {
+        const endpoint = new URL(this.appsyncUrl);
+        const request = new HttpRequest({
+            hostname: endpoint.hostname,
+            protocol: endpoint.protocol,
+            path: endpoint.pathname,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'host': endpoint.hostname
+            },
+            body: JSON.stringify({
+                query: query,
+                variables
+            })
+        });
+        try {
+            const signedRequest = await this.signer.sign(request);
+            const fetchOptions = {
+                method: signedRequest.method,
+                headers: signedRequest.headers,
+                body: signedRequest.body
+            };
+            const response = await fetch(endpoint, fetchOptions);
+            const data: any = await response.json();
+
+            return data
+        } catch (error) {
+            throw error;
+        }
     }
 
     // Data Ommition 
