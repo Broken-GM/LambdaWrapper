@@ -6,6 +6,7 @@ import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 import { HttpRequest } from "@aws-sdk/protocol-http";
+import { getSubscriptionQuery } from "graphql/queries";
 
 class Lambda {
     metaData: { 
@@ -32,15 +33,17 @@ class Lambda {
     signer: SignatureV4;
     ssmClient: SSMClient;
     appsyncUrl: string;
+    requiredSubscriptions: string[];
+    userId?: string;
 
     constructor({ 
         event, context, run, region, customPostExecution, 
         omitDynamoResponses, requiredPayloadKeys, timeout, 
-        timeoutOffset, signerGenerator
+        timeoutOffset, signerGenerator, requiredSubscriptions
     }: {
         event: any; context: any; run?: any; region?: string; customPostExecution?: any;
         omitDynamoResponses?: any, requiredPayloadKeys?: any; timeout?: any; timeoutOffset?: any;
-        signerGenerator: Function;
+        signerGenerator: Function; requiredSubscriptions: string[],
     }) {
         this.metaData  = { timers: {}, lambdaWrapperExecutionTime: 0 }
         this.startTimer({ name: 'totalExecution' })
@@ -79,6 +82,8 @@ class Lambda {
                 this.createBasicSigner({ region: this.region })
         this.ssmClient = new SSMClient({ region: this.region });
         this.appsyncUrl = process.env.APPSYNC_URL ?? ''
+        this.requiredSubscriptions = requiredSubscriptions ?? []
+        this.userId = event?.requestContext?.authorizer?.claims?.sub ?? null
     }
 
     // Helpers
@@ -379,6 +384,29 @@ class Lambda {
         }
     }
 
+    // Subscriptions
+    async isValidSubscription() {
+        if (this.requiredSubscriptions.length === 0) {
+            return true
+        }
+
+        const data = await this.sendAppsyncRequest({
+            query: getSubscriptionQuery,
+            variables: {
+                userId: this.userId
+            }
+        })
+
+        let isValidSubscription = 0
+        for (const subscription in this.requiredSubscriptions) {
+            if (data?.getSubscription[subscription]) {
+                isValidSubscription = isValidSubscription + 1
+            }
+        }
+
+        return this.requiredSubscriptions.length === isValidSubscription
+    }
+
     async main() {
         return new Promise(async (resolve) => {
             this.addToLog({ name: "Event Object", body: this.event })
@@ -406,6 +434,7 @@ class Lambda {
             } else {
                 try {
                     this.startTimer({ name: 'runExecution' })
+                    this.isValidSubscription()
                     this.response = await this.run(this)
                     this.endTimer({ name: 'runExecution' })
                 } catch (error) {
