@@ -43,7 +43,7 @@ class Lambda {
     }: {
         event: any; context: any; run?: any; region?: string; customPostExecution?: any;
         omitDynamoResponses?: any, requiredPayloadKeys?: any; timeout?: any; timeoutOffset?: any;
-        signerGenerator: Function; requiredSubscriptions: string[],
+        signerGenerator?: Function; requiredSubscriptions?: string[],
     }) {
         this.metaData  = { timers: {}, lambdaWrapperExecutionTime: 0 }
         this.startTimer({ name: 'totalExecution' })
