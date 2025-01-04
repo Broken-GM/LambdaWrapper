@@ -6,7 +6,7 @@ import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 import { HttpRequest } from "@aws-sdk/protocol-http";
-import { getSubscriptionQuery } from "graphql/queries";
+import { getSubscriptionQuery } from "./graphql/queries";
 
 class Lambda {
     metaData: { 
