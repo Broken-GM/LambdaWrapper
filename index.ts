@@ -394,7 +394,16 @@ class Lambda {
         }
 
         const data = await this.sendAppsyncRequest({
-            query: getSubscriptionQuery,
+            query: `
+                query getSubscription($userId: String!) {
+                    getSubscription(userId: $userId) {
+                        userId
+                        subscriptionId
+                        tokenGeneratorEnabled
+                        mtgInventoryEnabled
+                    }
+                }
+            `,
             variables: {
                 userId: this.userId
             },
