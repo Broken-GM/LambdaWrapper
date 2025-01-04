@@ -4,6 +4,7 @@ import util from 'util'
 import { SignatureV4 } from "@aws-sdk/signature-v4";
 import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import { Sha256 } from "@aws-crypto/sha256-js";
+import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 
 class Lambda {
     metaData: { 
@@ -28,6 +29,7 @@ class Lambda {
     timeoutId: any;
     region: string;
     signer: SignatureV4;
+    ssmClient: SSMClient;
 
     constructor({ 
         event, context, run, region, customPostExecution, 
@@ -73,6 +75,7 @@ class Lambda {
             signerGenerator ? 
                 signerGenerator({ region: this.region }) : 
                 this.createBasicSigner({ region: this.region })
+        this.ssmClient = new SSMClient({ region: this.region });
     }
 
     // Helpers
@@ -93,6 +96,13 @@ class Lambda {
         }
 
         return { object, isJson }
+    }
+
+    // SSM Params
+    async getSsmParameter({ name }: { name: string }) {
+        const command = new GetParameterCommand({ Name: name });
+        const response = await this.ssmClient.send(command);
+        return response.Parameter?.Value;
     }
 
     // Appsync
