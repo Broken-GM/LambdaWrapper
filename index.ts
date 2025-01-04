@@ -1,12 +1,11 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
 import fetch from 'node-fetch'
 import util from 'util'
-import { v4 as uuidv4 } from 'uuid';
+import { SignatureV4 } from "@aws-sdk/signature-v4";
+import { defaultProvider } from "@aws-sdk/credential-provider-node";
+import { Sha256 } from "@aws-crypto/sha256-js";
 
 class Lambda {
-    client: DynamoDBClient;
     metaData: { 
         timers: any; 
         lambdaWrapperExecutionTime: number; 
@@ -27,13 +26,17 @@ class Lambda {
     timeout: any;
     timeoutOffset: any;
     timeoutId: any;
+    region: string;
+    signer: SignatureV4;
 
     constructor({ 
         event, context, run, region, customPostExecution, 
-        omitDynamoResponses, requiredPayloadKeys, timeout, timeoutOffset 
+        omitDynamoResponses, requiredPayloadKeys, timeout, 
+        timeoutOffset, signerGenerator
     }: {
         event: any; context: any; run?: any; region?: string; customPostExecution?: any;
         omitDynamoResponses?: any, requiredPayloadKeys?: any; timeout?: any; timeoutOffset?: any;
+        signerGenerator: Function;
     }) {
         this.metaData  = { timers: {}, lambdaWrapperExecutionTime: 0 }
         this.startTimer({ name: 'totalExecution' })
@@ -54,7 +57,6 @@ class Lambda {
 
             return lambda.success({ body: { ip: text }, message: "" })
         }
-        this.client = new DynamoDBClient({ region: region ? region : 'us-west-2' })
         const body = this.isJson(event?.body)
         this.isBodyJson = body?.isJson
         if (body?.isJson) {
@@ -66,6 +68,11 @@ class Lambda {
         this.timeoutTriggered = false
         this.timeout = timeout ? timeout : 29000
         this.timeoutOffset = timeoutOffset ? timeoutOffset : 1000
+        this.region = region ?? 'us-east-1'
+        this.signer = 
+            signerGenerator ? 
+                signerGenerator({ region: this.region }) : 
+                this.createBasicSigner({ region: this.region })
     }
 
     // Helpers
@@ -86,6 +93,16 @@ class Lambda {
         }
 
         return { object, isJson }
+    }
+
+    // Appsync
+    createBasicSigner({ region }: { region?: string; }) {
+        return new SignatureV4({
+            credentials: defaultProvider(),
+            region: region ?? 'us-east-1',
+            service: 'appsync',
+            sha256: Sha256
+        });
     }
 
     // Data Ommition 
