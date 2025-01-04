@@ -436,8 +436,15 @@ class Lambda {
             } else {
                 try {
                     this.startTimer({ name: 'runExecution' })
-                    this.isValidSubscription()
-                    this.response = await this.run(this)
+                    const isValidSubscription = await this.isValidSubscription()
+                    if (isValidSubscription) {
+                        this.response = await this.run(this)
+                    } else {
+                        this.response = this.badRequestError({
+                            body: {},
+                            message: "Invalid Subscription"
+                        })
+                    }
                     this.endTimer({ name: 'runExecution' })
                 } catch (error) {
                     this.addErrorToLog({ error })
