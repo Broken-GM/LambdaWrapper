@@ -170,38 +170,6 @@ class Lambda {
         }
     }
 
-    // Dynamo
-    async getDynamoEntry({ table, pk, sk }: { table: string, pk: string, sk: string }) {
-        const getUserCommand = new GetCommand({
-            TableName: table,
-            Key: {
-                PK: pk,
-                SK: sk
-            },
-        })
-        const getEntryResponse = await this.client.send(getUserCommand)
-        const attributes = JSON.parse(getEntryResponse?.Item?.attributes ? getEntryResponse?.Item?.attributes : "{}")
-        this.addToLog({ name: `get>${table}>${pk}>${sk}>${uuidv4()}`, body: this.omitDynamoResponses ? "get sent" : getEntryResponse })
-
-        return { response: getEntryResponse, attributes }
-    }
-    async putDynamoEntry({ table, pk, sk, items }: { table: string, pk: string, sk: string, items: any }) {
-        const putEntryInput = {
-			TableName: table,
-			Item: {
-				PK: pk,
-				SK: sk,
-				...items
-			},
-		}
-		const putEntryCommand = new PutCommand(putEntryInput)
-
-		const putEntryResponse = await this.client.send(putEntryCommand)
-        this.addToLog({ name: `put>${table}>${pk}>${sk}>${uuidv4()}`, body: this.omitDynamoResponses ? "put sent" : putEntryResponse })
-
-        return { response: putEntryResponse }
-    }
-
     // Response
     basicResponseHeaders() {
         return {
