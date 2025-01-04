@@ -152,6 +152,8 @@ class Lambda {
             })
         });
         try {
+            this.addToLog({ name: `Appsync Query ${operationName}`, body: query })
+            this.addToLog({ name: `Appsync Variables ${operationName}`, body: variables })
             const signedRequest = await this.signer.sign(request);
             const fetchOptions = {
                 method: signedRequest.method,
