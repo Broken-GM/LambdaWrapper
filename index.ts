@@ -30,6 +30,7 @@ class Lambda {
     region: string;
     signer: SignatureV4;
     ssmClient: SSMClient;
+    appsyncUrl: string;
 
     constructor({ 
         event, context, run, region, customPostExecution, 
@@ -76,6 +77,7 @@ class Lambda {
                 signerGenerator({ region: this.region }) : 
                 this.createBasicSigner({ region: this.region })
         this.ssmClient = new SSMClient({ region: this.region });
+        this.appsyncUrl = process.env.APPSYNC_URL ?? ''
     }
 
     // Helpers
@@ -102,10 +104,24 @@ class Lambda {
     async getSsmParameter({ name }: { name: string }) {
         const command = new GetParameterCommand({ Name: name });
         const response = await this.ssmClient.send(command);
-        return response.Parameter?.Value;
+        
+        this.addToLog({ name: `SSM Param: ${name}`, body: response.Parameter?.Value ?? '' })
+        return response.Parameter?.Value ?? '';
     }
 
     // Appsync
+    async getAppsyncUrl() {
+        const { APPSYNC_URL } = process.env
+        let returnedAppsyncUrl = APPSYNC_URL
+
+        if (!APPSYNC_URL) {
+            returnedAppsyncUrl = await this.getSsmParameter({ name: '/brokengm/appsync/api/url' })
+        }
+
+        this.addToLog({ name: "Appsync Url", body: returnedAppsyncUrl })
+        return returnedAppsyncUrl ?? ""
+    }
+
     createBasicSigner({ region }: { region?: string; }) {
         return new SignatureV4({
             credentials: defaultProvider(),
@@ -336,6 +352,7 @@ class Lambda {
         return new Promise(async (resolve) => {
             this.addToLog({ name: "Event Object", body: this.event })
             this.addToLog({ name: "Body", body: this.body })
+            this.appsyncUrl = await this.getAppsyncUrl()
             const { isAllRequiredPayloadKeysPresent, message } = this.checkForRequiredPayloadKeys()
             if (!isAllRequiredPayloadKeysPresent) {
                 this.response = this.badRequestError({ body: {}, message })
