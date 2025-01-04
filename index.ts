@@ -124,7 +124,7 @@ class Lambda {
             returnedAppsyncUrl = await this.getSsmParameter({ name: '/brokengm/appsync/api/url' })
         }
 
-        this.addToLog({ name: "Appsync Url", body: returnedAppsyncUrl })
+        this.addToLog({ name: "Appsync Url", body: returnedAppsyncUrl ?? "" })
         return returnedAppsyncUrl ?? ""
     }
     createBasicSigner({ region }: { region?: string; }) {
@@ -135,7 +135,7 @@ class Lambda {
             sha256: Sha256
         });
     }
-    async sendAppsyncRequest({ query, variables }: { query: string, variables?: any, operationName?: string }) {
+    async sendAppsyncRequest({ query, variables, operationName }: { query: string, variables?: any, operationName?: string }) {
         const endpoint = new URL(this.appsyncUrl);
         const request = new HttpRequest({
             hostname: endpoint.hostname,
@@ -160,6 +160,7 @@ class Lambda {
             };
             const response = await fetch(endpoint, fetchOptions);
             const data: any = await response.json();
+            this.addToLog({ name: `Appsync Response ${operationName}`, body: data })
 
             return data
         } catch (error) {
@@ -394,12 +395,13 @@ class Lambda {
             query: getSubscriptionQuery,
             variables: {
                 userId: this.userId
-            }
+            },
+            operationName: "getSubscription"
         })
 
         let isValidSubscription = 0
         for (const subscription in this.requiredSubscriptions) {
-            if (data?.getSubscription[subscription]) {
+            if (data?.getSubscription?.[subscription]) {
                 isValidSubscription = isValidSubscription + 1
             }
         }
