@@ -389,6 +389,7 @@ class Lambda {
 
     // Subscriptions
     async isValidSubscription() {
+        this.addToLog({ name: "Required Subscriptions", body: this.requiredSubscriptions })
         if (this.requiredSubscriptions.length === 0) {
             return true
         }
