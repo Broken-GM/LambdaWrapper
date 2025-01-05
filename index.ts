@@ -162,9 +162,9 @@ class Lambda {
             };
             const response = await fetch(endpoint, fetchOptions);
             const data: any = await response.json();
-            this.addToLog({ name: `Appsync Response ${operationName}`, body: data })
+            this.addToLog({ name: `Appsync Response ${operationName}`, body: data?.data })
 
-            return data
+            return data?.data
         } catch (error) {
             throw error;
         }
