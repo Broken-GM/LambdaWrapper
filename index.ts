@@ -413,18 +413,10 @@ class Lambda {
 
         let isValidSubscription = 0
         for (let i = 0; i < this.requiredSubscriptions.length; i += 1) {
-            console.log('data?.getSubscription?.[this.requiredSubscriptions[i]]', data?.getSubscription?.[this.requiredSubscriptions[i]])
-            console.log('this.requiredSubscriptions[i]', this.requiredSubscriptions[i])
-            console.log('data?.getSubscription?.[this.requiredSubscriptions[i]] === true', data?.getSubscription?.[this.requiredSubscriptions[i]] === true)
-
             if (data?.getSubscription?.[this.requiredSubscriptions[i]] === true) {
                 isValidSubscription = isValidSubscription + 1
             }
         }
-
-        console.log('isValidSubscription', isValidSubscription)
-        console.log('this.requiredSubscriptions.length', this.requiredSubscriptions.length)
-        console.log('this.requiredSubscriptions.length === isValidSubscription', this.requiredSubscriptions.length === isValidSubscription)
 
         return this.requiredSubscriptions.length === isValidSubscription
     }
