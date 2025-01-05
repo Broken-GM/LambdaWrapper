@@ -166,7 +166,8 @@ class Lambda {
 
             return data?.data
         } catch (error) {
-            throw error;
+            this.addToLog({ name: `Appsync Error ${operationName}`, body: error })
+            return error;
         }
     }
 
