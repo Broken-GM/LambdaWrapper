@@ -412,8 +412,8 @@ class Lambda {
         })
 
         let isValidSubscription = 0
-        for (const subscription in this.requiredSubscriptions) {
-            if (data?.getSubscription?.[subscription]) {
+        for (let i = 0; i > this.requiredSubscriptions.length; i += 1) {
+            if (data?.getSubscription?.[this.requiredSubscriptions[i]] === true) {
                 isValidSubscription = isValidSubscription + 1
             }
         }
