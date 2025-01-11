@@ -6,7 +6,6 @@ import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 import { HttpRequest } from "@aws-sdk/protocol-http";
-import { getSubscriptionQuery } from "./graphql/queries";
 
 class Lambda {
     metaData: { 
@@ -35,15 +34,17 @@ class Lambda {
     appsyncUrl: string;
     requiredSubscriptions: string[];
     userId?: string;
+    enableAppsync?: boolean
 
     constructor({ 
         event, context, run, region, customPostExecution, 
         omitDynamoResponses, requiredPayloadKeys, timeout, 
-        timeoutOffset, signerGenerator, requiredSubscriptions
+        timeoutOffset, signerGenerator, requiredSubscriptions,
+        enableAppsync
     }: {
         event: any; context: any; run?: any; region?: string; customPostExecution?: any;
         omitDynamoResponses?: any, requiredPayloadKeys?: any; timeout?: any; timeoutOffset?: any;
-        signerGenerator?: Function; requiredSubscriptions?: string[],
+        signerGenerator?: Function; requiredSubscriptions?: string[], enableAppsync?: boolean
     }) {
         this.metaData  = { timers: {}, lambdaWrapperExecutionTime: 0 }
         this.startTimer({ name: 'totalExecution' })
@@ -80,6 +81,7 @@ class Lambda {
             signerGenerator ? 
                 signerGenerator({ region: this.region }) : 
                 this.createBasicSigner({ region: this.region })
+        this.enableAppsync = enableAppsync ?? true
         this.ssmClient = new SSMClient({ region: this.region });
         this.appsyncUrl = process.env.APPSYNC_URL ?? ''
         this.requiredSubscriptions = requiredSubscriptions ?? []
@@ -120,11 +122,14 @@ class Lambda {
         const { APPSYNC_URL } = process.env
         let returnedAppsyncUrl = APPSYNC_URL
 
-        if (!APPSYNC_URL) {
-            returnedAppsyncUrl = await this.getSsmParameter({ name: '/brokengm/appsync/api/url' })
+        if (this.enableAppsync) {
+            if (!APPSYNC_URL) {
+                returnedAppsyncUrl = await this.getSsmParameter({ name: '/brokengm/appsync/api/url' })
+            }
+    
+            this.addToLog({ name: "Appsync Url", body: returnedAppsyncUrl ?? "" })
         }
 
-        this.addToLog({ name: "Appsync Url", body: returnedAppsyncUrl ?? "" })
         return returnedAppsyncUrl ?? ""
     }
     createBasicSigner({ region }: { region?: string; }) {
