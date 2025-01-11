@@ -229,7 +229,7 @@ class Lambda {
             stringifiedLog = stringifiedLog.replaceAll(data, "****")
         });
 
-        this.log = JSON.parse(stringifiedLog)
+        this.log = JSON.parse(stringifiedLog ?? '{}')
     }
     printLog() {
         this.omitDataFromLog()
@@ -247,7 +247,7 @@ class Lambda {
         );
 
         if (response.SecretString) {
-            const parsedResponse = JSON.parse(response.SecretString)
+            const parsedResponse = JSON.parse(response.SecretString ?? '{}')
             const arrayOfSecrets = Object.keys(parsedResponse)
 
             this.secrets[shortName ? shortName : secretName] = parsedResponse
@@ -317,7 +317,7 @@ class Lambda {
             stringifiedResponse = stringifiedResponse.replaceAll(data, "****")
         });
 
-        this.response = JSON.parse(stringifiedResponse)
+        this.response = JSON.parse(stringifiedResponse ?? '{}')
     }
 
     // Operations
