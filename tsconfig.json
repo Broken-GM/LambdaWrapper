@@ -3,13 +3,18 @@
     "lib": [
       "ES2021.String"
     ],
-    "baseUrl": ".",
-    "strict": true,
-    "esModuleInterop": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "downlevelIteration": true,
+    "declaration": true,
+    "incremental": true,
+    "resolveJsonModule": true,
     "moduleResolution": "node",
   },
   "exclude": [
-    "node_modules",
-    "dist",
+    "test/",
+    "node_modules/",
+    "*/*.d.ts",
+    "**/*.spec.ts",
   ]
 }
