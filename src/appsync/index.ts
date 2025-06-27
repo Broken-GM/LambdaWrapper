@@ -4,7 +4,7 @@ import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { HttpRequest } from "@aws-sdk/protocol-http";
 import Ssm from "../ssm";
-import MetaData from "../../metaData";
+import MetaData from "../metaData";
 
 export class Appsync {
     logger: Logger
