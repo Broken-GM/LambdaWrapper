@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@Broken-GM/lambdawrapper",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A Wrapper for Nodejs Lambdas to standardize invocation, outputs, and logging",
   "main": "index.ts",
   "types": "dist/index.d.ts",
@@ -23,12 +23,12 @@
   },
   "homepage": "https://github.com/Broken-GM/LambdaWrapper#readme",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.670.0",
-    "@aws-sdk/client-secrets-manager": "^3.750.0",
-    "@aws-sdk/client-ssm": "^3.716.0",
-    "@aws-sdk/lib-dynamodb": "^3.670.0",
-    "@aws-sdk/protocol-http": "^3.374.0",
-    "@aws-sdk/signature-v4": "^3.374.0"
+    "@aws-sdk/client-dynamodb": "^3.835.0",
+    "@aws-sdk/client-secrets-manager": "^3.835.0",
+    "@aws-sdk/client-ssm": "^3.835.0",
+    "@aws-sdk/lib-dynamodb": "^3.835.0",
+    "@smithy/protocol-http": "^5.1.2",
+    "@smithy/signature-v4": "^5.1.2"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
