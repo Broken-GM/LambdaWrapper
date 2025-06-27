@@ -11,6 +11,8 @@ import Subscription from "../supscription";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, marshallOptions } from "@aws-sdk/lib-dynamodb";
 import DynamoDb from "../dynamoDb";
+import Athena from "../athena";
+import { AthenaClient } from "@aws-sdk/client-athena";
 
 export class Lambda {
     event: any;
@@ -50,6 +52,9 @@ export class Lambda {
     ddbDocClient: DynamoDBDocumentClient | undefined;
     dynamoDb: DynamoDb | undefined;
     sqsRecords: any[] | undefined;
+    athena: Athena;
+    enableAthena: boolean;
+    athenaClient: AthenaClient
 
     constructor({ 
         event, context, run, customPostExecution = () => {}, 
@@ -57,7 +62,7 @@ export class Lambda {
         skipDataOmission = false, enableSsm = false, enableAppsync = false, requiredSubscriptions = [], 
         isLambdaApiGatewayTarget = true, isLambdaEventBusTarget = false, ssmClient, enableSecretsManager = false,
         secretsClient, enableDynamoDb = false, ddbClient, ddbDocClient, dynamoMarshalOptions = {},
-        isLambdaSqsTarget = false
+        isLambdaSqsTarget = false, enableAthena, athenaClient, outputBucket
     }: {
         event: any; context: any; run?: any; customPostExecution?: Function;
         requiredPayloadKeys?: any; timeout?: number; timeoutOffset?: any; region?: string; 
@@ -65,7 +70,7 @@ export class Lambda {
         isLambdaApiGatewayTarget?: boolean; isLambdaEventBusTarget?: boolean; ssmClient?: SSMClient; enableSecretsManager?: boolean;
         secretsClient?: SecretsManagerClient; enableDynamoDb?: boolean;
         ddbClient?: DynamoDBClient; ddbDocClient?: DynamoDBDocumentClient; dynamoMarshalOptions?: marshallOptions;
-        isLambdaSqsTarget?: boolean;
+        isLambdaSqsTarget?: boolean; enableAthena?: boolean; athenaClient?: AthenaClient; outputBucket?: string;
     }) {
         // MetaData
         this.metaData = new MetaData({})
@@ -154,6 +159,18 @@ export class Lambda {
             requiredSubscriptions,
             appsync: this.appsync!
         })
+
+        // Athena
+        this.enableAthena = enableAthena
+        if (enableAthena) {
+            this.metaData.startTimer({ name: 'initializeAthena' })
+            this.athenaClient = athenaClient ?? new AthenaClient({ region });
+            this.athena = new Athena({ 
+                logger: this.logger, region, athenaClient: this.athenaClient, 
+                metaData: this.metaData, outputBucket: outputBucket
+            })
+            this.metaData.endTimer({ name: 'initializeAthena' })
+        }
 
         // Executions
         this.run = run ? run : async (lambda: Lambda) => {
