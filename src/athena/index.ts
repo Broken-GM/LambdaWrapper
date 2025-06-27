@@ -205,15 +205,16 @@ export class Athena {
             SELECT
         `;
         const parameters: any[] = [];
+        const queries: any[] = [];
 
         fieldsToInsert.forEach((fieldData) => {
             let parameterValue = data?.[fieldData.paramName]
             
             if (parameterValue) {
                 if (fieldData.toLower) {
-                    query += `LOWER(CAST(? AS ${fieldData.type})) as ${fieldData.athenaName},\n`
+                    queries.push(`LOWER(CAST(? AS ${fieldData.type})) as ${fieldData.athenaName}\n`)
                 } else {
-                    query += `CAST(? AS ${fieldData.type}) as ${fieldData.athenaName},\n`
+                    queries.push(`CAST(? AS ${fieldData.type}) as ${fieldData.athenaName}\n`)
                 }
                 if (fieldData.type === 'timestamp') {
                     parameterValue = moment(parameterValue).format('YYYY-MM-DD HH:mm:ss')
@@ -228,9 +229,11 @@ export class Athena {
                     parameters.push(parameterValue.trim());
                 }
             } else {
-                query += `'' as ${fieldData.athenaName},\n`
+                queries.push(`'' as ${fieldData.athenaName}\n`)
             }
         })
+
+        query += queries.join(',')
 
         return { 
             query, parameters
