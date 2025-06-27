@@ -195,13 +195,15 @@ export class Athena {
 
     createInsertQuery({
         fieldsToInsert,
-        data
+        data,
+        tableName,
     }: {
         fieldsToInsert: FieldToInsert[]
         data: any
+        tableName: string
     }) {
         let query = `
-            INSERT INTO events
+            INSERT INTO ${tableName}
             SELECT
         `;
         const parameters: any[] = [];
