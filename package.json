@@ -1,9 +1,9 @@
 {
   "type": "module",
   "name": "@Broken-GM/lambdawrapper",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "A Wrapper for Nodejs Lambdas to standardize invocation, outputs, and logging",
-  "main": "index.ts",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
