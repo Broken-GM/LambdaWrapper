@@ -130,7 +130,7 @@ export class Lambda {
 
         // Secrets Manager
         this.enableSecretsManager = enableSecretsManager
-        if (enableSsm) {
+        if (enableSecretsManager) {
             this.metaData.startTimer({ name: 'initializeSecretsManager' })
             this.secretsClient = secretsClient ?? new SecretsManagerClient({ region });
             this.metaData.endTimer({ name: 'initializeSecretsManager' })
