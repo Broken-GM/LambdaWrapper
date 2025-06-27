@@ -232,7 +232,9 @@ export class Athena {
             }
         })
 
-        return query
+        return { 
+            query, parameters
+        }
     }
 }
 
